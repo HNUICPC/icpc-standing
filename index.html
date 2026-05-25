@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ICPC Live Standings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    html,body{
+      font-family:'Inter',sans-serif;
+      background:#FAFAFA;
+      color:#212121;
+      min-height:100vh;
+    }
+
+
+    .top-header{
+      background:#FFFFFF;
+      padding:16px 32px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid #E0E0E0;
+      min-height:90px;
+    }
+    .logo-wrap{
+      display:flex;flex-direction:column;
+      align-items:flex-start;gap:6px;flex-shrink:0;
+    }
+    .logo-icons{ display:flex;gap:5px; }
+    .logo-icon-box{
+      width:34px;height:34px;border-radius:4px;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .logo-icon-box.cloud{background:#1E88E5;}
+    .logo-icon-box.bulb {background:#FDD835;}
+    .logo-icon-box.flag {background:#E53935;}
+    .logo-icon-box svg{width:20px;height:20px;}
+    .logo-foundation{
+      font-size:11px;color:#9E9E9E;font-weight:400;
+      font-family:'Inter',sans-serif;letter-spacing:0.2px;
+    }
+    .hdr-center{
+      display:flex;flex-direction:column;
+      align-items:center;gap:4px;flex:1;text-align:center;
+    }
+    .hdr-title-top{
+      display:flex;align-items:baseline;gap:8px;line-height:1;
+    }
+    .hdr-the  {font-size:16px;font-weight:400;color:#212121;font-family:'Inter',sans-serif;}
+    .hdr-icpc {font-size:32px;font-weight:700;color:#1E88E5;font-family:'Inter',sans-serif;letter-spacing:-0.5px;line-height:1;}
+    .hdr-wf   {font-size:22px;font-weight:400;color:#1E88E5;font-family:'Inter',sans-serif;}
+    .hdr-loc  {font-size:22px;font-weight:400;color:#8D6E63;font-family:'Inter',sans-serif;}
+    .hdr-subtitle{
+      font-size:14px;font-weight:500;color:#1E88E5;
+      letter-spacing:0.3px;font-family:'Inter',sans-serif;
+      text-transform:uppercase;
+    }
+    .hdr-right{
+      font-size:12px;font-weight:400;color:#9E9E9E;
+      font-family:'Inter',sans-serif;text-align:right;flex-shrink:0;
+    }
+
+  
+    .blue-bar{
+      background:#039BE5;height:38px;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 16px;
+    }
+    .blue-bar-l{font-size:13px;font-weight:700;color:#FFFFFF;font-family:'Inter',sans-serif;}
+    .blue-bar-r{display:flex;align-items:center;gap:14px;}
+    .live-badge{display:flex;align-items:center;gap:5px;}
+    .live-dot{
+      width:6px;height:6px;border-radius:50%;background:#F44336;
+      animation:livePulse 1.4s ease-in-out infinite;
+    }
+    @keyframes livePulse{
+      0%,100%{box-shadow:0 0 0 0 rgba(244,67,54,0.6);opacity:1}
+      50%{box-shadow:0 0 0 4px rgba(244,67,54,0);opacity:0.7}
+    }
+    .live-text{font-size:10px;font-weight:700;color:#FFFFFF;font-family:'Inter',sans-serif;letter-spacing:0.5px;}
+    .blue-bar-standings{font-size:13px;font-weight:400;color:#FFFFFF;font-family:'Inter',sans-serif;text-transform:lowercase;}
+
+    .page-body{max-width:1400px;margin:24px auto;padding:0 24px 60px;}
+
+    .legend-bar{
+      display:flex;align-items:center;gap:18px;
+      margin-bottom:10px;padding:0 2px;
+    }
+    .legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#616161;font-family:'Inter',sans-serif;}
+    .legend-swatch{
+      width:16px;height:16px;border-radius:2px;border:1px solid rgba(0,0,0,0.12);flex-shrink:0;
+    }
+    .legend-swatch.ac-first  {background:#2E7D32;}
+    .legend-swatch.ac-regular{background:#81C784;}
+    .legend-swatch.wa        {background:#EF5350;}
+    .legend-swatch.empty     {background:#FFFFFF;border:1px solid #BDBDBD;}
+    .standings-wrap{
+      overflow-x:auto;
+      background:#FFFFFF;
+      border:1px solid #E0E0E0;
+      box-shadow:0 1px 3px rgba(0,0,0,0.12);
+    }
+    .standings-wrap::-webkit-scrollbar{height:5px}
+    .standings-wrap::-webkit-scrollbar-track{background:#f0f0f0}
+    .standings-wrap::-webkit-scrollbar-thumb{background:#BDBDBD;border-radius:3px}
+
+    table.standings{
+      border-collapse:collapse;
+      width:100%;
+      min-width:900px;
+    }
+    table.standings thead tr{
+      background:#FFFFFF;
+      border-bottom:2px solid #BDBDBD;
+    }
+    table.standings thead th{
+      height:44px;
+      font-family:'Inter',sans-serif;
+      font-weight:700;font-size:11px;
+      text-transform:uppercase;color:#212121;
+      vertical-align:bottom;padding-bottom:8px;
+      white-space:nowrap;letter-spacing:0.3px;
+    }
+    th.th-rank {width:50px;text-align:center;}
+    th.th-team {text-align:left;padding-left:12px;min-width:300px;}
+    th.th-score{width:75px;text-align:center;}
+    th.th-prob {width:65px;text-align:center;padding:4px 3px 8px;}
+
+    .prob-hdr-sq{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:24px;height:24px;border-radius:2px;
+      font-family:'Inter',sans-serif;font-weight:700;font-size:11px;
+      border-width:1px;border-style:solid;
+    }
+    table.standings tbody tr{
+      border-bottom:1px solid #EEEEEE;
+      transition:background 0.12s ease;cursor:default;
+    }
+    table.standings tbody tr.row-rank-1{background:#FFFDE7;}
+    table.standings tbody tr.row-rank-2{background:#F5F5F5;}
+    table.standings tbody tr.row-rank-3{background:#FFF3E0;}
+    table.standings tbody tr.row-rank-n{background:#FFFFFF;}
+    table.standings tbody tr:hover{background:#E3F2FD !important;}
+    table.standings tbody td{height:50px;vertical-align:middle;padding:4px 3px;}
+    td.td-rank{width:50px;text-align:center;padding:0;}
+    .rank-num{font-family:'JetBrains Mono',monospace;}
+    .rank-1-cell{
+      background:#FFD700;width:100%;height:100%;min-height:50px;
+      display:flex;align-items:center;justify-content:center;gap:3px;
+      font-size:16px;font-weight:700;color:#3E2723;
+    }
+    .rank-2-cell{
+      background:#C0C0C0;width:100%;height:100%;min-height:50px;
+      display:flex;align-items:center;justify-content:center;gap:3px;
+      font-size:16px;font-weight:700;color:#212121;
+    }
+    .rank-3-cell{
+      background:#CD7F32;width:100%;height:100%;min-height:50px;
+      display:flex;align-items:center;justify-content:center;gap:3px;
+      font-size:16px;font-weight:700;color:#3E2723;
+    }
+    .rank-n-cell{
+      background:#F5F5F5;width:100%;height:100%;min-height:50px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:14px;font-weight:700;color:#616161;
+    }
+    td.td-team{padding:0 12px;}
+    .team-inner{display:flex;align-items:center;gap:0;}
+    .heart-icon{color:#BDBDBD;font-size:14px;margin-right:6px;flex-shrink:0;line-height:1;}
+    .uni-logo{
+      width:26px;height:26px;border-radius:50%;
+      background:#ECEFF1;border:1px solid #CFD8DC;
+      display:flex;align-items:center;justify-content:center;
+      font-size:11px;font-weight:700;color:#546E7A;
+      flex-shrink:0;font-family:'Inter',sans-serif;
+    }
+    .team-badge{
+      display:inline-flex;align-items:center;justify-content:center;gap:3px;
+      border-radius:3px;padding:1px 5px;
+      font-size:9px;font-weight:700;
+      background:#E3F2FD;color:#1565C0;border:1px solid #BBDEFB;
+      margin-left:6px;flex-shrink:0;font-family:'Inter',sans-serif;
+      letter-spacing:0.2px;
+    }
+    .region-pill{
+      display:inline-flex;align-items:center;justify-content:center;
+      border-radius:10px;padding:2px 8px;
+      font-size:10px;font-weight:600;
+      border-width:1px;border-style:solid;
+      white-space:nowrap;flex-shrink:0;
+      margin-left:10px;margin-right:10px;
+      font-family:'Inter',sans-serif;
+    }
+    .rg-asia-east     {background:#FFF9C4;color:#F57F17;border-color:#FFF59D;}
+    .rg-north-america {background:#FFE0B2;color:#E65100;border-color:#FFCC80;}
+    .rg-n-eurasia     {background:#FFF9C4;color:#F57F17;border-color:#FFF59D;}
+    .rg-europe        {background:#E3F2FD;color:#1565C0;border-color:#BBDEFB;}
+    .rg-asia-pacific  {background:#FFF9C4;color:#F57F17;border-color:#FFF59D;}
+    .rg-default       {background:#F5F5F5;color:#616161;border-color:#E0E0E0;}
+    .team-name-text{
+      font-size:14px;font-weight:700;color:#212121;
+      font-family:'Inter',sans-serif;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px;
+    }
+
+    td.td-score{width:75px;text-align:center;vertical-align:middle;}
+    .score-inner{
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;line-height:1.2;
+    }
+    .score-solved{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:#212121;line-height:1.1;}
+    .score-pen   {font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:400;color:#757575;}
+
+    td.td-prob{width:65px;text-align:center;vertical-align:middle;padding:2px 2px;border-left:1px solid #EEEEEE;}
+    .prob-cell-inner{
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      width:100%;min-height:46px;padding:3px 3px;position:relative;
+    }
+
+    .prob-cell-first{
+      background:#2E7D32;
+      border:1px solid #1B5E20;
+    }
+    .prob-cell-first .prob-time {
+      font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:#FFFFFF;line-height:1.15;
+    }
+    .prob-cell-first .prob-tries{
+      font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:400;color:#FFFFFF;opacity:0.9;line-height:1.1;
+    }
+    .prob-cell-first .prob-solver{
+      font-family:'Inter',sans-serif;font-size:9px;font-weight:600;
+      color:rgba(255,255,255,0.85);line-height:1.1;margin-top:1px;
+      max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+    .first-badge{
+      position:absolute;top:2px;right:2px;
+      background:#FFD700;color:#1B5E20;
+      font-size:7px;font-weight:700;font-family:'Inter',sans-serif;
+      padding:1px 3px;border-radius:2px;line-height:1.3;
+      letter-spacing:0.2px;
+    }
+
+    .prob-cell-ac{
+      background:#A5D6A7;
+      border:1px solid #81C784;
+    }
+    .prob-cell-ac .prob-time {
+      font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:#1B5E20;line-height:1.15;
+    }
+    .prob-cell-ac .prob-tries{
+      font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:400;color:#2E7D32;opacity:0.95;line-height:1.1;
+    }
+    .prob-cell-ac .prob-solver{
+      font-family:'Inter',sans-serif;font-size:9px;font-weight:600;
+      color:#388E3C;line-height:1.1;margin-top:1px;
+      max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+
+    .prob-cell-wa{
+      background:#EF5350;
+      border:1px solid #E53935;
+    }
+    .prob-cell-wa .prob-tries{
+      font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:#FFFFFF;line-height:1.1;
+    }
+    .prob-cell-empty{
+      background:#FFFFFF;
+      border:1px solid #EEEEEE;
+    }
+
+    table.standings tfoot tr{
+      border-top:2px solid #BDBDBD;
+      background:#F9FBE7;
+    }
+    table.standings tfoot td{
+      padding:5px 2px;vertical-align:middle;
+    }
+    .tfoot-label-cell{
+      padding:5px 12px !important;
+      text-align:right;
+    }
+    .prob-stat-cell{
+      text-align:center;
+      border-left:1px solid #EEEEEE;
+    }
+    .prob-stat-inner{
+      display:flex;flex-direction:column;align-items:center;gap:1px;
+    }
+    .prob-stat-label{
+      font-size:8px;font-weight:700;color:#9E9E9E;
+      text-transform:uppercase;letter-spacing:0.3px;
+      font-family:'Inter',sans-serif;
+    }
+    .prob-stat-row{
+      display:flex;align-items:center;gap:2px;
+    }
+    .prob-stat-ac-val{
+      font-family:'JetBrains Mono',monospace;
+      font-size:11px;font-weight:700;color:#2E7D32;
+    }
+    .prob-stat-sep{
+      font-family:'JetBrains Mono',monospace;
+      font-size:10px;color:#BDBDBD;
+    }
+    .prob-stat-wa-val{
+      font-family:'JetBrains Mono',monospace;
+      font-size:11px;font-weight:700;color:#E53935;
+    }
+    .prob-stat-first{
+      font-size:8px;font-weight:600;color:#1B5E20;
+      font-family:'Inter',sans-serif;
+      max-width:60px;overflow:hidden;text-overflow:ellipsis;
+      white-space:nowrap;text-align:center;line-height:1.2;
+      margin-top:1px;
+    }
+
+    .state-center{text-align:center;padding:72px 32px;color:#9E9E9E;font-size:14px;}
+    .spinner{
+      width:36px;height:36px;
+      border:3px solid #E0E0E0;border-top-color:#039BE5;
+      border-radius:50%;animation:spin .75s linear infinite;margin:0 auto 14px;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .last-updated{
+      text-align:right;font-size:11px;color:#9E9E9E;
+      font-family:'JetBrains Mono',monospace;margin-top:8px;padding-right:4px;
+    }
+    @keyframes flashUp {
+      0%   { background:#00C853 !important; transform:translateY(6px); box-shadow:0 4px 16px rgba(0,200,83,0.45); }
+      30%  { background:#69F0AE !important; transform:translateY(-3px); }
+      60%  { background:#B9F6CA !important; transform:translateY(1px); }
+      100% { background:inherit; transform:translateY(0); box-shadow:none; }
+    }
+    @keyframes flashDown {
+      0%   { background:#FF1744 !important; transform:translateY(-6px); box-shadow:0 -4px 16px rgba(255,23,68,0.45); }
+      30%  { background:#FF8A80 !important; transform:translateY(3px); }
+      60%  { background:#FFCDD2 !important; transform:translateY(-1px); }
+      100% { background:inherit; transform:translateY(0); box-shadow:none; }
+    }
+    tr.row-flash-up   { animation:flashUp   1.4s cubic-bezier(0.22,1,0.36,1); }
+    tr.row-flash-down { animation:flashDown 1.4s cubic-bezier(0.22,1,0.36,1); }
+  </style>
+</head>
+<body>
+
+<header class="top-header">
+  <div class="logo-wrap">
+    <img src="logo.png" alt="Logo" style="height:58px;width:auto;object-fit:contain;display:block;">
+  </div>
+
+  <div class="hdr-center">
+    <div class="hdr-title-top">
+      <span class="hdr-the" id="hdr-the-year">The 2026</span>
+      <span class="hdr-icpc">ICPC</span>
+      <span class="hdr-wf">Traning</span>
+      <span class="hdr-loc" id="hdr-loc">| HNUFE CP</span>
+    </div>
+    <div class="hdr-subtitle">International Collegiate Programming Contest</div>
+  </div>
+
+
+</header>
+<div class="blue-bar">
+  <span class="blue-bar-l" id="bar-name">ICPC World Finals</span>
+  <div class="blue-bar-r">
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      <span class="live-text">LIVE</span>
+    </div>
+    <span class="blue-bar-standings">final standings</span>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="legend-bar">
+    <div class="legend-item">
+      <div class="legend-swatch ac-first"></div>
+      <span>First Solve ★</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch ac-regular"></div>
+      <span>Accepted</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch wa"></div>
+      <span>Wrong Answer</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch empty"></div>
+      <span>Not Attempted</span>
+    </div>
+  </div>
+
+  <div class="standings-wrap" id="standings-wrap">
+    <div class="state-center" id="loading-state">
+      <div class="spinner"></div>
+      Loading standings…
+    </div>
+  </div>
+  <div class="last-updated" id="last-updated"></div>
+</div>
+
+<script type="module">
+import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, getDocs,
+  collection, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyCkdqBDlyjxYGITnGNE7phfNxUguJ2gm-Q",
+  authDomain:        "icpc-academy-388f8.firebaseapp.com",
+  projectId:         "icpc-academy-388f8",
+  storageBucket:     "icpc-academy-388f8.firebasestorage.app",
+  messagingSenderId: "1047619006167",
+  appId:             "1:1047619006167:web:40ca0013ea7cb0d8984a92",
+  measurementId:     "G-4K3RJXLZSQ"
+};
+const CONTEST_ID = "ahBak6jZVOKkZc3xZ5yd"; 
+
+const PROB_COLORS = [
+  { bg:'#D7CCC8', border:'#A1887F', text:'#212121' }, 
+  { bg:'#81C784', border:'#66BB6A', text:'#212121' }, 
+  { bg:'#64B5F6', border:'#42A5F5', text:'#212121' }, 
+  { bg:'#FFF176', border:'#FDD835', text:'#F57F17' }, 
+  { bg:'#FFB74D', border:'#FFA726', text:'#212121' }, 
+  { bg:'#BDBDBD', border:'#9E9E9E', text:'#212121' }, 
+  { bg:'#AED581', border:'#9CCC65', text:'#212121' }, 
+  { bg:'#F48FB1', border:'#F06292', text:'#212121' }, 
+  { bg:'#4FC3F7', border:'#29B6F6', text:'#212121' }, 
+  { bg:'#FF8A65', border:'#FF7043', text:'#212121' }, 
+  { bg:'#E0E0E0', border:'#BDBDBD', text:'#212121' }, 
+];
+
+function regionClass(r) {
+  if (!r) return 'rg-default';
+  const l = r.toLowerCase();
+  if (l.includes('asia east'))     return 'rg-asia-east';
+  if (l.includes('north america')) return 'rg-north-america';
+  if (l.includes('northern eura')) return 'rg-n-eurasia';
+  if (l.includes('europe'))        return 'rg-europe';
+  if (l.includes('asia pacific'))  return 'rg-asia-pacific';
+  return 'rg-default';
+}
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+let contestData    = null;
+let teamNamesMap   = {};   
+let userDisplayMap = {};  
+let subsCache      = [];
+let orderedProbIds = [];
+let prevRankMap    = {};
+
+function startClock() {
+  function tick() {
+    const now = new Date();
+    const ts  = String(now.getHours()).padStart(2,'0') + ':' +
+                String(now.getMinutes()).padStart(2,'0') + ':' +
+                String(now.getSeconds()).padStart(2,'0');
+    const el = document.getElementById('last-updated');
+    if (el) el.textContent = 'Last updated: ' + ts;
+  }
+  tick(); setInterval(tick, 1000);
+}
+
+function fmtMins(totalMins) {
+  const h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+}
+
+async function loadContest() {
+  const snap = await getDoc(doc(db, 'contests', CONTEST_ID));
+  if (!snap.exists()) throw new Error('Contest not found');
+  contestData = { id: snap.id, ...snap.data() };
+
+  const name     = contestData.title || contestData.name || 'ICPC World Finals';
+  const location = contestData.location || 'HNUFE CPC';
+  const year     = contestData.year || new Date().getFullYear();
+
+  document.getElementById('hdr-the-year').textContent = `The ${year}`;
+  document.getElementById('hdr-loc').textContent       = `| ${location}`;
+  document.getElementById('bar-name').textContent       = name;
+  if (contestData.hostedBy)
+    document.getElementById('hdr-hosted').textContent  = `hosted by ${contestData.hostedBy}`;
+
+  if (Array.isArray(contestData.problemIds) && contestData.problemIds.length) {
+    orderedProbIds = contestData.problemIds;
+  } else {
+    try {
+      const raw  = await getDocs(collection(db, 'contests', CONTEST_ID, 'problems'));
+      const docs = raw.docs.map(d => ({ id: d.id, ...d.data() }));
+      const nf   = ['order','index','problemIndex','position','num']
+                     .find(f => docs.some(d => typeof d[f] === 'number'));
+      if (nf) docs.sort((a,b)=>(a[nf]??9999)-(b[nf]??9999));
+      else if (docs.some(d=>d.createdAt))
+        docs.sort((a,b)=>(a.createdAt?.toMillis?.()??0)-(b.createdAt?.toMillis?.()??0));
+      else docs.sort((a,b)=>a.id.localeCompare(b.id));
+      orderedProbIds = docs.map(d=>d.id);
+    } catch(e) { console.warn('[ICPC] problems fetch blocked:', e.message); orderedProbIds = []; }
+  }
+
+  const teamMap = contestData.teamMap || {};
+  const teamIds = [...new Set(Object.values(teamMap))].filter(Boolean);
+  await Promise.all(teamIds.map(async tid => {
+    try {
+      const t = await getDoc(doc(db,'teams',tid));
+      if (t.exists()) {
+        const d = t.data();
+        teamNamesMap[tid] = d.name || d.teamName || d.title || tid;
+        if (Array.isArray(d.members)) {
+          d.members.forEach(m => {
+            const uid  = m.uid || m.userId || m.id;
+            const name = m.name || m.displayName || m.email?.split('@')[0] || uid?.slice(0,6) || '?';
+            if (uid) userDisplayMap[uid] = name;
+          });
+        }
+      }
+    } catch(e) {}
+  }));
+}
+
+function subscribe() {
+  onSnapshot(
+    collection(db, 'contests', CONTEST_ID, 'submissions'),
+    snap => { subsCache = snap.docs.map(d => d.data()); render(); },
+    err  => showError(err.message)
+  );
+}
+
+function calcStandings() {
+  const teamMap = contestData?.teamMap || {};
+  const startMs = contestData?.startTime?.toMillis?.() ?? 0;
+  const em = {};
+
+  subsCache.forEach(s => {
+    const uid    = s.userId;
+    const teamId = teamMap[uid] || null;
+
+    const key    = teamId || uid;
+
+    let name;
+    if (teamId) {
+      name = teamNamesMap[teamId]
+           || contestData?.teamNames?.[teamId]
+           || teamId;             
+    } else {
+      name = userDisplayMap[uid]
+           || s.userName
+           || s.userEmail?.split('@')[0]
+           || uid.slice(0,8)
+           || 'User';
+    }
+
+    const solverLabel = userDisplayMap[uid]
+                      || s.userName
+                      || s.userEmail?.split('@')[0]
+                      || uid.slice(0,6)
+                      || '?';
+
+    if (!em[key]) em[key] = {
+      key, name, isTeam: !!teamId,
+      region: s.region || null,
+      problems: {}
+    };
+
+    if (teamId && teamNamesMap[teamId]) em[key].name = teamNamesMap[teamId];
+
+    const pid = s.problemId;
+    if (!pid) return;
+    if (!em[key].problems[pid])
+      em[key].problems[pid] = { ac: false, attempts: 0, firstAcTime: null, solverLabel: '' };
+
+    const ps = em[key].problems[pid];
+    if (!ps.ac) {
+      if (s.verdict === 'AC') {
+        ps.ac          = true;
+        ps.firstAcTime = s.submitTime?.toMillis?.() ?? Date.now();
+        ps.solverLabel = solverLabel;
+      } else {
+        ps.attempts++;
+      }
+    }
+  });
+
+  const rows = Object.values(em).map(e => {
+    let solved = 0, penalty = 0;
+    for (const ps of Object.values(e.problems)) {
+      if (ps.ac) {
+        solved++;
+        penalty += Math.floor((ps.firstAcTime - startMs) / 60000) + ps.attempts * 20;
+      }
+    }
+    return { ...e, solved, penalty };
+  }).sort((a,b) => b.solved - a.solved || a.penalty - b.penalty);
+
+  let rank = 1;
+  for (let i = 0; i < rows.length; i++) {
+    if (i > 0 && (rows[i].solved !== rows[i-1].solved || rows[i].penalty !== rows[i-1].penalty))
+      rank = i + 1;
+    rows[i].rank = rank;
+  }
+  return rows;
+}
+
+function getProbIds() {
+  if (orderedProbIds.length) return orderedProbIds;
+  const n        = contestData?.problemCount || 0;
+  const fromSubs = [...new Set(subsCache.map(s=>s.problemId).filter(Boolean))].sort();
+  const result   = [];
+  for (let i = 0; i < Math.max(n, fromSubs.length); i++) result.push(fromSubs[i] ?? String(i));
+  return result;
+}
+
+function calcProbMeta(rows, probIds, startMs) {
+  const firstSolve = {};
+  for (const r of rows) {
+    for (const [pid, ps] of Object.entries(r.problems)) {
+      if (ps.ac) {
+        if (!firstSolve[pid] || ps.firstAcTime < firstSolve[pid].time) {
+          firstSolve[pid] = { key: r.key, time: ps.firstAcTime, name: r.name };
+        }
+      }
+    }
+  }
+
+  const stats = {};
+  probIds.forEach(pid => { stats[pid] = { ac:0, wa:0, firstSolverName: '' }; });
+
+  const teamMap = contestData?.teamMap || {};
+  const seenAC  = {};
+  subsCache.forEach(s => {
+    const uid    = s.userId;
+    const teamId = teamMap[uid] || null;
+    const key    = (teamId || uid) + '::' + s.problemId;
+    const pid    = s.problemId;
+    if (!stats[pid]) return;
+    if (s.verdict === 'AC' && !seenAC[key]) {
+      seenAC[key] = true;
+      stats[pid].ac++;
+    } else if (s.verdict !== 'AC' && !seenAC[key]) {
+      stats[pid].wa++;
+    }
+  });
+  probIds.forEach(pid => {
+    if (firstSolve[pid]) stats[pid].firstSolverName = firstSolve[pid].name;
+  });
+
+  return { firstSolve, stats };
+}
+
+function render() {
+  document.getElementById('loading-state')?.remove();
+  const wrap = document.getElementById('standings-wrap');
+  if (!contestData) { wrap.innerHTML=`<div class="state-center">No contest data.</div>`; return; }
+
+  const rows    = calcStandings();
+  const probIds = getProbIds();
+  const startMs = contestData?.startTime?.toMillis?.() ?? 0;
+
+  const newRankMap = {};
+  rows.forEach(r => { newRankMap[r.key] = r.rank; });
+
+  if (!rows.length) {
+    wrap.innerHTML=`<div class="state-center" style="font-weight:700;color:#555">No submissions yet.</div>`;
+    return;
+  }
+
+  const { firstSolve, stats: probStats } = calcProbMeta(rows, probIds, startMs);
+  const probHeaders = probIds.map((_, i) => {
+    const letter = String.fromCharCode(80 + i); 
+    const c = PROB_COLORS[i % PROB_COLORS.length];
+    return `<th class="th-prob">
+      <div class="prob-hdr-sq" style="background:${c.bg};border-color:${c.border};color:${c.text}">${letter}</div>
+    </th>`;
+  }).join('');
+
+  const rowsHtml = rows.map(r => {
+    const rankCls  = r.rank===1?'row-rank-1':r.rank===2?'row-rank-2':r.rank===3?'row-rank-3':'row-rank-n';
+    const prevRank = prevRankMap[r.key];
+    const flashCls = (prevRank !== undefined && prevRank !== r.rank)
+      ? (r.rank < prevRank ? ' row-flash-up' : ' row-flash-down') : '';
+
+    const rankHtml = r.rank===1
+      ? `<div class="rank-1-cell"><span>🥇</span><span class="rank-num" style="font-size:16px;font-weight:700;color:#3E2723">${r.rank}</span></div>`
+      : r.rank===2
+      ? `<div class="rank-2-cell"><span>🥈</span><span class="rank-num" style="font-size:16px;font-weight:700;color:#212121">${r.rank}</span></div>`
+      : r.rank===3
+      ? `<div class="rank-3-cell"><span>🥉</span><span class="rank-num" style="font-size:16px;font-weight:700;color:#3E2723">${r.rank}</span></div>`
+      : `<div class="rank-n-cell"><span class="rank-num">${r.rank}</span></div>`;
+
+    const regionHtml = r.region
+      ? `<span class="region-pill ${regionClass(r.region)}">${esc(r.region)}</span>`
+      : '';
+
+    const teamBadgeHtml = r.isTeam
+      ? `<span class="team-badge">👥 TEAM</span>`
+      : '';
+
+    const probCells = probIds.map(pid => {
+      const ps = r.problems[pid];
+      if (!ps) return `<td class="td-prob"><div class="prob-cell-inner prob-cell-empty"></div></td>`;
+
+      if (ps.ac) {
+        const mins    = Math.floor((ps.firstAcTime - startMs) / 60000);
+        const tries   = ps.attempts + 1;
+        const isFirst = firstSolve[pid]?.key === r.key;
+        const triesStr = tries === 1 ? '1 try' : tries + ' tries';
+        const solverHtml = '';
+
+        if (isFirst) {
+          return `<td class="td-prob">
+            <div class="prob-cell-inner prob-cell-first">
+              <span class="prob-time">${fmtMins(mins)}</span>
+              <span class="prob-tries">${triesStr}</span>
+              ${solverHtml}
+            </div>
+          </td>`;
+        }
+        return `<td class="td-prob">
+          <div class="prob-cell-inner prob-cell-ac">
+            <span class="prob-time">${fmtMins(mins)}</span>
+            <span class="prob-tries">${triesStr}</span>
+            ${solverHtml}
+          </div>
+        </td>`;
+      }
+
+      const tries = ps.attempts;
+      return `<td class="td-prob">
+        <div class="prob-cell-inner prob-cell-wa">
+          <span class="prob-tries">${tries===1?'1 try':tries+' tries'}</span>
+        </div>
+      </td>`;
+    }).join('');
+
+    return `<tr class="${rankCls}${flashCls}" data-key="${esc(r.key)}">
+      <td class="td-rank" style="padding:0;">${rankHtml}</td>
+      <td class="td-team">
+        <div class="team-inner">
+          <span class="heart-icon">♡</span>
+          <div class="uni-logo">${esc(r.name.slice(0,1).toUpperCase())}</div>
+          ${teamBadgeHtml}
+          ${regionHtml}
+          <span class="team-name-text">${esc(r.name)}</span>
+        </div>
+      </td>
+      <td class="td-score">
+        <div class="score-inner">
+          <span class="score-solved">${r.solved}</span>
+          <span class="score-pen">${fmtMins(r.penalty)}</span>
+        </div>
+      </td>
+      ${probCells}
+    </tr>`;
+  }).join('');
+
+  const tfootCells = probIds.map(pid => {
+    const st  = probStats[pid] || { ac:0, wa:0, firstSolverName:'' };
+    const acS = String(st.ac).padStart(2,'0');
+    const waS = String(st.wa).padStart(2,'0');
+    const firstNameHtml = st.firstSolverName
+      ? `<div class="prob-stat-first">★ ${esc(st.firstSolverName)}</div>`
+      : '';
+    return `<td class="td-prob prob-stat-cell">
+      <div class="prob-stat-inner">
+        <span class="prob-stat-label">AC / WA</span>
+        <div class="prob-stat-row">
+          <span class="prob-stat-ac-val">${acS}</span>
+          <span class="prob-stat-sep">/</span>
+          <span class="prob-stat-wa-val">${waS}</span>
+        </div>
+        ${firstNameHtml}
+      </div>
+    </td>`;
+  }).join('');
+
+  wrap.innerHTML = `
+  <table class="standings">
+    <thead><tr>
+      <th class="th-rank">Rank</th>
+      <th class="th-team">Team</th>
+      <th class="th-score">Score</th>
+      ${probHeaders}
+    </tr></thead>
+    <tbody>${rowsHtml}</tbody>
+    <tfoot><tr>
+      <td class="tfoot-label-cell" colspan="3">
+        <span style="font-family:'Inter',sans-serif;font-size:10px;font-weight:700;color:#9E9E9E;text-transform:uppercase;letter-spacing:0.5px;">Problem Stats</span>
+      </td>
+      ${tfootCells}
+    </tr></tfoot>
+  </table>`;
+
+  prevRankMap = newRankMap;
+}
+
+function showError(msg) {
+  document.getElementById('loading-state')?.remove();
+  document.getElementById('standings-wrap').innerHTML =
+    `<div class="state-center" style="color:#E53935">⚠ ${esc(msg)}</div>`;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+startClock();
+(async () => {
+  try {
+    await loadContest();
+    subscribe();
+  } catch(e) {
+    showError(e.message);
+  }
+})();
+</script>
+</body>
+</html>
