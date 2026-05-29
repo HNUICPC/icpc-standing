@@ -99,6 +99,16 @@
     .legend-swatch.ac-regular{background:#81C784;}
     .legend-swatch.wa        {background:#EF5350;}
     .legend-swatch.empty     {background:#FFFFFF;border:1px solid #BDBDBD;}
+    .legend-swatch.frozen    {
+      background:repeating-linear-gradient(
+        45deg,
+        rgba(21,101,192,0.3) 0px, rgba(21,101,192,0.3) 4px,
+        rgba(21,101,192,0.1) 4px, rgba(21,101,192,0.1) 8px
+      );
+      border:1px solid #90CAF9;
+    }
+    .legend-item.frozen-legend{ display:none; }
+    .legend-item.frozen-legend.visible{ display:flex; }
     .standings-wrap{
       overflow-x:auto;
       background:#FFFFFF;
@@ -346,6 +356,87 @@
     }
     tr.row-flash-up   { animation:flashUp   1.4s cubic-bezier(0.22,1,0.36,1); }
     tr.row-flash-down { animation:flashDown 1.4s cubic-bezier(0.22,1,0.36,1); }
+
+    /* ── Freeze banner ───────────────────────────────────────────────── */
+    .freeze-banner{
+      display:none;
+      align-items:center;justify-content:space-between;
+      gap:12px;
+      padding:10px 18px;
+      margin-bottom:10px;
+      background:linear-gradient(90deg,#0D47A1 0%,#1565C0 60%,#0288D1 100%);
+      border:1px solid #1565C0;
+      border-radius:6px;
+      box-shadow:0 2px 8px rgba(21,101,192,0.25);
+      font-family:'Inter',sans-serif;
+    }
+    .freeze-banner.visible{ display:flex; }
+    .freeze-banner-left{
+      display:flex;align-items:center;gap:10px;
+    }
+    .freeze-icon{
+      font-size:20px;line-height:1;flex-shrink:0;
+      filter:drop-shadow(0 0 4px rgba(255,255,255,0.5));
+    }
+    .freeze-texts{ display:flex;flex-direction:column;gap:2px; }
+    .freeze-title{
+      font-size:13px;font-weight:700;color:#FFFFFF;letter-spacing:0.2px;
+    }
+    .freeze-sub{
+      font-size:11px;font-weight:400;color:rgba(255,255,255,0.75);
+    }
+    .freeze-countdown-wrap{
+      display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+    }
+    .freeze-countdown-label{
+      font-size:10px;font-weight:600;color:rgba(255,255,255,0.65);
+      text-transform:uppercase;letter-spacing:0.5px;
+    }
+    .freeze-countdown{
+      font-family:'JetBrains Mono',monospace;
+      font-size:22px;font-weight:700;color:#FFFFFF;
+      letter-spacing:1px;line-height:1;
+      text-shadow:0 0 12px rgba(255,255,255,0.4);
+    }
+
+    /* Blue bar frozen state */
+    .frozen-badge{
+      display:none;align-items:center;gap:5px;
+    }
+    .frozen-badge.visible{ display:flex; }
+    .frozen-dot{
+      font-size:13px;line-height:1;
+      animation:frozenPulse 2s ease-in-out infinite;
+    }
+    @keyframes frozenPulse{
+      0%,100%{opacity:1;transform:scale(1)}
+      50%{opacity:0.6;transform:scale(1.2)}
+    }
+    .frozen-text{
+      font-size:10px;font-weight:700;color:#FFFFFF;
+      font-family:'Inter',sans-serif;letter-spacing:0.5px;
+    }
+    /* hide live badge while frozen */
+    .live-badge.hidden{ display:none !important; }
+
+    /* Frozen rows get a subtle overlay stripe */
+    .prob-cell-frozen{
+      background:repeating-linear-gradient(
+        45deg,
+        rgba(21,101,192,0.18) 0px, rgba(21,101,192,0.18) 4px,
+        rgba(21,101,192,0.07) 4px, rgba(21,101,192,0.07) 8px
+      );
+      border:1px solid #90CAF9;
+    }
+    .prob-cell-frozen .prob-time{
+      font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:#1565C0;
+    }
+    .prob-cell-frozen .prob-tries{
+      font-family:'JetBrains Mono',monospace;font-size:10px;color:#1976D2;opacity:0.85;
+    }
+    .prob-cell-frozen-q{
+      font-size:15px;line-height:1;color:#1565C0;font-weight:700;
+    }
   </style>
 </head>
 <body>
@@ -359,7 +450,7 @@
     <div class="hdr-title-top">
       <span class="hdr-the" id="hdr-the-year">The 2026</span>
       <span class="hdr-icpc">ICPC</span>
-      <span class="hdr-wf">Traning</span>
+      <span class="hdr-wf">Training</span>
       <span class="hdr-loc" id="hdr-loc">| HNUFE CP</span>
     </div>
     <div class="hdr-subtitle">International Collegiate Programming Contest</div>
@@ -370,15 +461,35 @@
 <div class="blue-bar">
   <span class="blue-bar-l" id="bar-name">ICPC World Finals</span>
   <div class="blue-bar-r">
-    <div class="live-badge">
+    <div class="live-badge" id="live-badge">
       <div class="live-dot"></div>
       <span class="live-text">LIVE</span>
     </div>
-    <span class="blue-bar-standings">final standings</span>
+    <div class="frozen-badge" id="frozen-badge">
+      <span class="frozen-dot">❄</span>
+      <span class="frozen-text">FROZEN</span>
+    </div>
+    <span class="blue-bar-standings" id="bar-standings-label">final standings</span>
   </div>
 </div>
 
 <div class="page-body">
+  <div class="freeze-banner" id="freeze-banner">
+    <div class="freeze-banner-left">
+      <span class="freeze-icon">❄️</span>
+      <div class="freeze-texts">
+        <span class="freeze-title">Scoreboard Frozen</span>
+        <span class="freeze-sub" id="freeze-sub-text">
+          Standings reflect submissions up to the last 30 minutes · Live results hidden until contest ends
+        </span>
+      </div>
+    </div>
+    <div class="freeze-countdown-wrap">
+      <span class="freeze-countdown-label">Unfreezes in</span>
+      <span class="freeze-countdown" id="freeze-countdown">--:--</span>
+    </div>
+  </div>
+
   <div class="legend-bar">
     <div class="legend-item">
       <div class="legend-swatch ac-first"></div>
@@ -395,6 +506,10 @@
     <div class="legend-item">
       <div class="legend-swatch empty"></div>
       <span>Not Attempted</span>
+    </div>
+    <div class="legend-item frozen-legend" id="frozen-legend-item">
+      <div class="legend-swatch frozen"></div>
+      <span>Pending / Hidden ❄</span>
     </div>
   </div>
 
@@ -423,7 +538,7 @@ const firebaseConfig = {
   appId:             "1:1047619006167:web:40ca0013ea7cb0d8984a92",
   measurementId:     "G-4K3RJXLZSQ"
 };
-const CONTEST_ID = "ahBak6jZVOKkZc3xZ5yd"; 
+const CONTEST_ID = "NJmQY5uEACt5OUzyPMFW"; 
 
 const PROB_COLORS = [
   { bg:'#D7CCC8', border:'#A1887F', text:'#212121' }, 
@@ -467,6 +582,41 @@ function startClock() {
                 String(now.getSeconds()).padStart(2,'0');
     const el = document.getElementById('last-updated');
     if (el) el.textContent = 'Last updated: ' + ts;
+
+    // ── Freeze countdown ────────────────────────────────────────────────
+    if (!contestData) return;
+    const endMs    = contestData.endTime?.toMillis?.() ?? 0;
+    const FREEZE_WINDOW_MS = 30 * 60 * 1000;
+    const freezeMs = endMs - FREEZE_WINDOW_MS;
+    const nowMs    = Date.now();
+    const isFrozen = endMs > 0 && nowMs >= freezeMs && nowMs < endMs;
+
+    const liveBadge   = document.getElementById('live-badge');
+    const frozenBadge = document.getElementById('frozen-badge');
+    const banner      = document.getElementById('freeze-banner');
+    const countdown   = document.getElementById('freeze-countdown');
+    const barLabel    = document.getElementById('bar-standings-label');
+
+    if (isFrozen) {
+      liveBadge?.classList.add('hidden');
+      frozenBadge?.classList.add('visible');
+      banner?.classList.add('visible');
+      document.getElementById('frozen-legend-item')?.classList.add('visible');
+      if (barLabel) barLabel.textContent = 'frozen standings';
+
+      // countdown to contest end (= unfreeze)
+      const left = endMs - nowMs;
+      const mm   = String(Math.floor(left / 60000)).padStart(2,'0');
+      const ss   = String(Math.floor((left % 60000) / 1000)).padStart(2,'0');
+      if (countdown) countdown.textContent = `${mm}:${ss}`;
+    } else {
+      liveBadge?.classList.remove('hidden');
+      frozenBadge?.classList.remove('visible');
+      banner?.classList.remove('visible');
+      document.getElementById('frozen-legend-item')?.classList.remove('visible');
+      if (barLabel) barLabel.textContent = nowMs >= endMs ? 'final standings' : 'live standings';
+      if (countdown) countdown.textContent = '--:--';
+    }
   }
   tick(); setInterval(tick, 1000);
 }
@@ -536,12 +686,26 @@ function subscribe() {
   );
 }
 
-function calcStandings() {
+function calcStandings(scoringCutoff) {
   const teamMap = contestData?.teamMap || {};
   const startMs = contestData?.startTime?.toMillis?.() ?? 0;
   const em = {};
 
-  subsCache.forEach(s => {
+  // ── Sort by submitTime ascending FIRST ──────────────────────────────
+  // Firestore returns docs in arbitrary order. Without sorting, an AC that
+  // appears earlier in the array swallows any WAs that were actually
+  // submitted before it — causing ps.attempts = 0 and wrong penalty.
+  const sortedSubs = [...subsCache].sort((a, b) => {
+    const ta = a.submitTime?.toMillis?.() ?? 0;
+    const tb = b.submitTime?.toMillis?.() ?? 0;
+    return ta - tb;
+  });
+
+  sortedSubs.forEach(s => {
+    // ── Freeze: skip submissions after the cutoff ──────────────────────
+    const submitMs = s.submitTime?.toMillis?.();
+    if (scoringCutoff != null && submitMs != null && submitMs > scoringCutoff) return;
+
     const uid    = s.userId;
     const teamId = teamMap[uid] || null;
 
@@ -620,7 +784,7 @@ function getProbIds() {
   return result;
 }
 
-function calcProbMeta(rows, probIds, startMs) {
+function calcProbMeta(rows, probIds, startMs, scoringCutoff) {
   const firstSolve = {};
   for (const r of rows) {
     for (const [pid, ps] of Object.entries(r.problems)) {
@@ -637,7 +801,15 @@ function calcProbMeta(rows, probIds, startMs) {
 
   const teamMap = contestData?.teamMap || {};
   const seenAC  = {};
-  subsCache.forEach(s => {
+  // Sort ascending so seenAC correctly marks only pre-AC WAs
+  const sortedSubs2 = [...subsCache].sort((a, b) =>
+    (a.submitTime?.toMillis?.() ?? 0) - (b.submitTime?.toMillis?.() ?? 0)
+  );
+  sortedSubs2.forEach(s => {
+    // ── Freeze: skip post-cutoff submissions in stats too ────────────────
+    const submitMs = s.submitTime?.toMillis?.();
+    if (scoringCutoff != null && submitMs != null && submitMs > scoringCutoff) return;
+
     const uid    = s.userId;
     const teamId = teamMap[uid] || null;
     const key    = (teamId || uid) + '::' + s.problemId;
@@ -662,7 +834,18 @@ function render() {
   const wrap = document.getElementById('standings-wrap');
   if (!contestData) { wrap.innerHTML=`<div class="state-center">No contest data.</div>`; return; }
 
-  const rows    = calcStandings();
+  // ── Freeze: compute cutoff ────────────────────────────────────────────
+  const endMs           = contestData.endTime?.toMillis?.() ?? 0;
+  const FREEZE_WINDOW   = 30 * 60 * 1000;
+  const freezeMs        = endMs ? endMs - FREEZE_WINDOW : null;
+  const nowMs           = Date.now();
+  const isContestOver   = endMs && nowMs >= endMs;
+  const isFrozen        = freezeMs && nowMs >= freezeMs && !isContestOver;
+  // While frozen, only count subs before the freeze point.
+  // After contest ends, count everything (full unfreeze).
+  const scoringCutoff   = isFrozen ? freezeMs : null;
+
+  const rows    = calcStandings(scoringCutoff);
   const probIds = getProbIds();
   const startMs = contestData?.startTime?.toMillis?.() ?? 0;
 
@@ -674,9 +857,9 @@ function render() {
     return;
   }
 
-  const { firstSolve, stats: probStats } = calcProbMeta(rows, probIds, startMs);
+  const { firstSolve, stats: probStats } = calcProbMeta(rows, probIds, startMs, scoringCutoff);
   const probHeaders = probIds.map((_, i) => {
-    const letter = String.fromCharCode(80 + i); 
+    const letter = String.fromCharCode(65 + i); 
     const c = PROB_COLORS[i % PROB_COLORS.length];
     return `<th class="th-prob">
       <div class="prob-hdr-sq" style="background:${c.bg};border-color:${c.border};color:${c.text}">${letter}</div>
@@ -707,9 +890,25 @@ function render() {
 
     const probCells = probIds.map(pid => {
       const ps = r.problems[pid];
-      if (!ps) return `<td class="td-prob"><div class="prob-cell-inner prob-cell-empty"></div></td>`;
+      if (!ps) {
+        // If frozen, check if there are any post-freeze subs for this entity+problem
+        // that are hidden from view. Show a "?" cell to indicate pending activity.
+        if (isFrozen) {
+          const teamMap2  = contestData?.teamMap || {};
+          const hasHidden = subsCache.some(s => {
+            const sTeam = teamMap2[s.userId] || null;
+            const sKey  = sTeam || s.userId;
+            const subMs = s.submitTime?.toMillis?.();
+            return sKey === r.key && s.problemId === pid && subMs != null && subMs > freezeMs;
+          });
+          if (hasHidden) return `<td class="td-prob"><div class="prob-cell-inner prob-cell-frozen"><span class="prob-cell-frozen-q">?</span></div></td>`;
+        }
+        return `<td class="td-prob"><div class="prob-cell-inner prob-cell-empty"></div></td>`;
+      }
 
       if (ps.ac) {
+        // While frozen, check if this team has post-freeze activity on an already-AC problem
+        // (shouldn't normally happen in ICPC rules, but show accurately)
         const mins    = Math.floor((ps.firstAcTime - startMs) / 60000);
         const tries   = ps.attempts + 1;
         const isFirst = firstSolve[pid]?.key === r.key;
@@ -734,7 +933,29 @@ function render() {
         </td>`;
       }
 
+      // WA (not yet AC before cutoff)
       const tries = ps.attempts;
+
+      // If frozen and there's post-freeze activity on this problem for this entity,
+      // the outcome is unknown — show a pending "?" cell instead of plain WA.
+      if (isFrozen) {
+        const teamMap2  = contestData?.teamMap || {};
+        const hasHidden = subsCache.some(s => {
+          const sTeam = teamMap2[s.userId] || null;
+          const sKey  = sTeam || s.userId;
+          const subMs = s.submitTime?.toMillis?.();
+          return sKey === r.key && s.problemId === pid && subMs != null && subMs > freezeMs;
+        });
+        if (hasHidden) {
+          return `<td class="td-prob">
+            <div class="prob-cell-inner prob-cell-frozen">
+              <span class="prob-time">${fmtMins(Math.floor((Date.now() - startMs)/60000))}</span>
+              <span class="prob-tries">${tries > 0 ? tries + '✗ + ?' : '?'}</span>
+            </div>
+          </td>`;
+        }
+      }
+
       return `<td class="td-prob">
         <div class="prob-cell-inner prob-cell-wa">
           <span class="prob-tries">${tries===1?'1 try':tries+' tries'}</span>
@@ -756,7 +977,7 @@ function render() {
       <td class="td-score">
         <div class="score-inner">
           <span class="score-solved">${r.solved}</span>
-          <span class="score-pen">${fmtMins(r.penalty)}</span>
+          <span class="score-pen">${r.penalty} pts</span>
         </div>
       </td>
       ${probCells}
